@@ -80,17 +80,21 @@ export default class SankeyPlugin extends Plugin {
             const sankeyD = d3san.sankey()
                 .nodes(sankeyData.nodes)
                 .links(sankeyData.links)
-                .nodeAlign(d3san.sankeyJustify)
-                .nodeWidth(100)
+                .nodeAlign(d3san.sankeyLeft)
+                .nodeWidth(40)
                 .extent([
                     [this.dimensions.margins, this.dimensions.margins],
                     [
                         this.dimensions.width - this.dimensions.margins * 2,
                         this.dimensions.height - this.dimensions.margins * 2
                     ]
-                ]);
+                ])
+                .nodePadding(16)
+                .nodeSort(null);
 
             sankeyD(sankeyData);
+
+            const color = d3.scaleSequential(d3.schemePuBuGn).domain(sankeyData.nodes.map((d) => d.height!));
 
             const svg = d3.create('svg')
                 .attr("height", this.dimensions.height)
@@ -105,7 +109,7 @@ export default class SankeyPlugin extends Plugin {
                 .join("rect")
                 .attr("x", (d) => d.x0!)
                 .attr("y", (d) => d.y0!)
-                .attr("fill", 'dodgerblue')
+                .attr("fill", (d) => color(d.height!))
                 .attr("height", (d) => d.y1! - d.y0!)
                 .attr("width", (d) => d.x1! - d.x0!);
 
@@ -118,6 +122,7 @@ export default class SankeyPlugin extends Plugin {
                 .data(sankeyData.links)
                 .join("path")
                 .attr("d", d3san.sankeyLinkHorizontal())
+                // .attr("stroke", (d) =)
                 .attr("stroke-width", (d) => d.width!);
 
             svg.append("g")

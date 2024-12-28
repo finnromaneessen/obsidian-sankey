@@ -1,10 +1,11 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import * as d3san from 'd3-sankey';
 import * as d3 from 'd3';
-import { parse as yamlParse } from "yaml";
+import { parse as yamlParse } from 'yaml';
 
 interface SNodeExtra {
     name: string;
+    color: string;
 }
 
 interface SLinkExtra {
@@ -18,6 +19,7 @@ type SLink = d3san.SankeyLink<SNodeExtra, SLinkExtra>;
 
 interface YamlData {
     links: SLink[];
+    nodes: SNode[];
 }
 
 interface DAG {
@@ -45,6 +47,26 @@ function mapNodeValues(data: DAG): Map<string, number> {
     return kv;
 }
 
+/**
+ * Checks wheter a string is a valid css color.
+ * @param color CSS color string to verify
+ * @returns The verified color or a random color
+ */
+function colorOrRandom(color: string): d3.RGBColor {
+    const s = new Option().style;
+    s.color = color;
+
+    if (s.color !== '') {
+        return d3.rgb(color);
+    }
+
+    var num = Math.round(0xffffff * Math.random());
+    var r = num >> 16;
+    var g = num >> 8 & 255;
+    var b = num & 255;
+    return d3.color('rgb(' + r + ', ' + g + ', ' + b + ')')!.rgb();
+}
+
 export default class SankeyPlugin extends Plugin {
     dimensions = {
         height: 600,
@@ -54,17 +76,15 @@ export default class SankeyPlugin extends Plugin {
 
     async onload() {
         this.registerMarkdownCodeBlockProcessor('sankey', (source, el, ctx) => {
-            const sankeyData: DAG = { nodes: [], links: [] };
-
             const yamlData = yamlParse(source) as YamlData;
-            sankeyData.links = yamlData.links;
+            const sankeyData: DAG = { nodes: yamlData.nodes, links: yamlData.links };
 
             sankeyData.links.forEach((link) => {
                 if (!sankeyData.nodes.some((node) => node.name == link.source)) {
-                    sankeyData.nodes.push({ name: link.source });
+                    sankeyData.nodes.push({ name: link.source, color: '' });
                 }
                 if (!sankeyData.nodes.some((node) => node.name == link.target)) {
-                    sankeyData.nodes.push({ name: link.target });
+                    sankeyData.nodes.push({ name: link.target, color: '' });
                 }
             });
 
@@ -103,7 +123,7 @@ export default class SankeyPlugin extends Plugin {
                 .join("rect")
                 .attr("x", (d) => d.x0!)
                 .attr("y", (d) => d.y0!)
-                .attr("fill", (d) => color(d.height!))
+                .attr("fill", (d) => colorOrRandom(d.color).toString())
                 .attr("height", (d) => d.y1! - d.y0!)
                 .attr("width", (d) => d.x1! - d.x0!);
 

@@ -1,20 +1,24 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import * as d3san from 'd3-sankey';
 import * as d3 from 'd3';
+import { parse as yamlParse } from "yaml";
 
 interface SNodeExtra {
-    nodeId: number;
     name: string;
 }
 
 interface SLinkExtra {
-    source: number;
-    target: number;
+    source: string;
+    target: string;
     value: number;
 }
 
 type SNode = d3san.SankeyNode<SNodeExtra, SLinkExtra>;
 type SLink = d3san.SankeyLink<SNodeExtra, SLinkExtra>;
+
+interface YamlData {
+    links: SLink[];
+}
 
 interface DAG {
     nodes: SNode[];
@@ -22,21 +26,21 @@ interface DAG {
 }
 
 //TODO More efficient solution
-function mapNodeValues(data: DAG): Map<number, number> {
-    let kv = new Map<number, number>;
+function mapNodeValues(data: DAG): Map<string, number> {
+    let kv = new Map<string, number>;
 
     data.nodes.forEach((node) => {
         let input = 0;
         let output = 0;
         data.links.forEach((link) => {
-            if (link.target == node.nodeId) {
+            if (link.target == node.name) {
                 input += link.value;
             }
-            if (link.source == node.nodeId) {
+            if (link.source == node.name) {
                 output += link.value;
             }
         });
-        kv.set(node.nodeId, Math.max(input, output));
+        kv.set(node.name, Math.max(input, output));
     });
     return kv;
 }
@@ -52,27 +56,16 @@ export default class SankeyPlugin extends Plugin {
         this.registerMarkdownCodeBlockProcessor('sankey', (source, el, ctx) => {
             const sankeyData: DAG = { nodes: [], links: [] };
 
-            const rows = source.split('\n').filter((row) => row.length > 0);
-            const nodeMap = new Map<string, number>;
-            let nodeCnt = 0;
+            const yamlData = yamlParse(source) as YamlData;
+            sankeyData.links = yamlData.links;
 
-            rows.forEach((row) => {
-                const cols = row.split(',');
-
-                if (cols.length != 3) {
-                    return;
+            sankeyData.links.forEach((link) => {
+                if (!sankeyData.nodes.some((node) => node.name == link.source)) {
+                    sankeyData.nodes.push({ name: link.source });
                 }
-
-                if (!nodeMap.has(cols[0])) {
-                    nodeMap.set(cols[0], nodeCnt++);
-                    sankeyData.nodes.push({ name: cols[0], nodeId: nodeMap.get(cols[0])! });
+                if (!sankeyData.nodes.some((node) => node.name == link.target)) {
+                    sankeyData.nodes.push({ name: link.target });
                 }
-                if (!nodeMap.has(cols[1])) {
-                    nodeMap.set(cols[1], nodeCnt++);
-                    sankeyData.nodes.push({ name: cols[1], nodeId: nodeMap.get(cols[1])! });
-                }
-
-                sankeyData.links.push({ source: nodeMap.get(cols[0])!, target: nodeMap.get(cols[1])!, value: +cols[2] });
             });
 
             const valueMap = mapNodeValues(sankeyData);
@@ -89,6 +82,7 @@ export default class SankeyPlugin extends Plugin {
                         this.dimensions.height - this.dimensions.margins * 2
                     ]
                 ])
+                .nodeId((d) => (d as SNode).name)
                 .nodePadding(16)
                 .nodeSort(null);
 
@@ -122,7 +116,6 @@ export default class SankeyPlugin extends Plugin {
                 .data(sankeyData.links)
                 .join("path")
                 .attr("d", d3san.sankeyLinkHorizontal())
-                // .attr("stroke", (d) =)
                 .attr("stroke-width", (d) => d.width!);
 
             svg.append("g")
@@ -133,7 +126,7 @@ export default class SankeyPlugin extends Plugin {
                 .attr("y", d => (d.y1! + d.y0!) / 2)
                 .attr("dy", "0.35em")
                 .attr("text-anchor", d => d.x0! < this.dimensions.width / 2 ? "start" : "end")
-                .text(d => `${d.name}: ${valueMap.get(nodeMap.get(d.name)!)}`);
+                .text(d => `${d.name}: ${valueMap.get(d.name)}`);
 
             el.appendChild(svg.node()!);
         });

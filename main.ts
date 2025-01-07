@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { Plugin } from 'obsidian';
 import * as d3san from 'd3-sankey';
 import * as d3 from 'd3';
 import { parse as yamlParse } from 'yaml';
@@ -44,7 +44,6 @@ type SLink = d3san.SankeyLink<SNodeExtra, SLinkExtra>;
 interface YamlData {
     links: SLink[];
     nodes: SNode[];
-    options: SankeySettings;
 }
 
 interface SankeyData {
@@ -145,7 +144,14 @@ export default class SankeyPlugin extends Plugin {
         this.registerMarkdownCodeBlockProcessor('sankey', (source, el, ctx) => {
             const yamlData = yamlParse(source) as YamlData;
             const sankeyData: SankeyData = { nodes: yamlData.nodes, links: yamlData.links };
-            const options: SankeySettings = yamlData.options;
+
+            if (sankeyData.nodes == null) {
+                sankeyData.nodes = [];
+            }
+
+            if (sankeyData.links == null) {
+                sankeyData.links = [];
+            }
 
             // Add all nodes to sankeyData
             sankeyData.links.forEach((link) => {
@@ -173,8 +179,7 @@ export default class SankeyPlugin extends Plugin {
                     ]
                 ])
                 .nodeId((d) => (d as SNode).name)
-                .nodePadding(this.settings.nodePadding)
-                .nodeSort(null);
+                .nodePadding(this.settings.nodePadding);
 
             sankeyGenerator(sankeyData);
 

@@ -122,6 +122,10 @@ function linkColor(link: SLink, linkColor: string): string {
 
 export default class SankeyPlugin extends Plugin {
     settings: SankeySettings;
+    graph: d3san.SankeyGraph<{}, {}>;
+    svg: SVGSVGElement;
+    data: SankeyData;
+    element: HTMLElement;
 
     dimensions = {
         height: 600,
@@ -135,6 +139,72 @@ export default class SankeyPlugin extends Plugin {
 
     async saveSettings() {
         await this.saveData(this.settings);
+
+        this.element.removeChild(this.svg);
+        this.svg = this.generateSankey();
+        this.element.appendChild(this.svg);
+    }
+
+    generateSankey(): SVGSVGElement {
+        // Create Sankey generator
+        const generator = d3san.sankey()
+            .nodes(this.data.nodes)
+            .links(this.data.links)
+            .nodeAlign(nodeAlign[this.settings.nodeAlign])
+            .nodeWidth(this.settings.nodeWidth)
+            .extent([
+                [this.dimensions.margins, this.dimensions.margins],
+                [
+                    this.dimensions.width - this.dimensions.margins * 2,
+                    this.dimensions.height - this.dimensions.margins * 2
+                ]
+            ])
+            .nodeId((d) => (d as SNode).name)
+            .nodePadding(this.settings.nodePadding);
+
+        generator(this.data);
+
+        //Create SVG
+        const svg = d3.create('svg')
+            .attr("height", this.dimensions.height)
+            .attr("width", this.dimensions.width)
+            .attr("overflow", "visible")
+            .style('background', 'white');
+
+        // Add nodes
+        svg.append("g")
+            .selectAll("rect")
+            .data(this.data.nodes)
+            .join("rect")
+            .attr("x", (d) => d.x0!)
+            .attr("y", (d) => d.y0!)
+            .attr("fill", (d) => d.color!)
+            .attr("height", (d) => d.y1! - d.y0!)
+            .attr("width", (d) => d.x1! - d.x0!);
+
+        // Add links
+        svg.append("g")
+            .selectAll()
+            .data(this.data.links)
+            .join("path")
+            .attr("fill", "none")
+            .attr("stroke-opacity", 0.3)
+            .attr("stroke", (d) => linkColor(d, this.settings.linkColor))
+            .attr("d", d3san.sankeyLinkHorizontal())
+            .attr("stroke-width", (d) => d.width!);
+
+        // Add text to nodes
+        svg.append("g")
+            .selectAll()
+            .data(this.data.nodes)
+            .join("text")
+            .attr("x", d => d.x0! < this.dimensions.width / 2 ? d.x1! + 6 : d.x0! - 6)
+            .attr("y", d => (d.y1! + d.y0!) / 2)
+            .attr("dy", "0.35em")
+            .attr("text-anchor", d => d.x0! < this.dimensions.width / 2 ? "start" : "end")
+            .text(d => `${d.name}: ${d.value}`);
+
+        return svg.node()!;
     }
 
     async onload() {
@@ -142,88 +212,33 @@ export default class SankeyPlugin extends Plugin {
         this.addSettingTab(new SankeySettingTab(this.app, this));
 
         this.registerMarkdownCodeBlockProcessor('sankey', (source, el, ctx) => {
-            const yamlData = yamlParse(source) as YamlData;
-            const sankeyData: SankeyData = { nodes: yamlData.nodes, links: yamlData.links };
+            this.element = el;
 
-            if (sankeyData.nodes == null) {
-                sankeyData.nodes = [];
+            const yamlData = yamlParse(source) as YamlData;
+            this.data = { nodes: yamlData.nodes, links: yamlData.links };
+
+            if (this.data.nodes == null) {
+                this.data.nodes = [];
             }
 
-            if (sankeyData.links == null) {
-                sankeyData.links = [];
+            if (this.data.links == null) {
+                this.data.links = [];
             }
 
             // Add all nodes to sankeyData
-            sankeyData.links.forEach((link) => {
-                if (!sankeyData.nodes.some((node) => node.name == link.source)) {
-                    sankeyData.nodes.push({ name: link.source });
+            this.data.links.forEach((link) => {
+                if (!this.data.nodes.some((node) => node.name == link.source)) {
+                    this.data.nodes.push({ name: link.source });
                 }
-                if (!sankeyData.nodes.some((node) => node.name == link.target)) {
-                    sankeyData.nodes.push({ name: link.target });
+                if (!this.data.nodes.some((node) => node.name == link.target)) {
+                    this.data.nodes.push({ name: link.target });
                 }
             });
 
-            prepareNodes(sankeyData);
+            prepareNodes(this.data);
 
-            // Create Sankey generator
-            const sankeyGenerator = d3san.sankey()
-                .nodes(sankeyData.nodes)
-                .links(sankeyData.links)
-                .nodeAlign(nodeAlign[this.settings.nodeAlign])
-                .nodeWidth(this.settings.nodeWidth)
-                .extent([
-                    [this.dimensions.margins, this.dimensions.margins],
-                    [
-                        this.dimensions.width - this.dimensions.margins * 2,
-                        this.dimensions.height - this.dimensions.margins * 2
-                    ]
-                ])
-                .nodeId((d) => (d as SNode).name)
-                .nodePadding(this.settings.nodePadding);
-
-            sankeyGenerator(sankeyData);
-
-            //Create SVG
-            const svg = d3.create('svg')
-                .attr("height", this.dimensions.height)
-                .attr("width", this.dimensions.width)
-                .attr("overflow", "visible")
-                .style('background', 'white');
-
-            // Add nodes
-            svg.append("g")
-                .selectAll("rect")
-                .data(sankeyData.nodes)
-                .join("rect")
-                .attr("x", (d) => d.x0!)
-                .attr("y", (d) => d.y0!)
-                .attr("fill", (d) => d.color!)
-                .attr("height", (d) => d.y1! - d.y0!)
-                .attr("width", (d) => d.x1! - d.x0!);
-
-            // Add links
-            svg.append("g")
-                .selectAll()
-                .data(sankeyData.links)
-                .join("path")
-                .attr("fill", "none")
-                .attr("stroke-opacity", 0.3)
-                .attr("stroke", (d) => linkColor(d, this.settings.linkColor))
-                .attr("d", d3san.sankeyLinkHorizontal())
-                .attr("stroke-width", (d) => d.width!);
-
-            // Add text to nodes
-            svg.append("g")
-                .selectAll()
-                .data(sankeyData.nodes)
-                .join("text")
-                .attr("x", d => d.x0! < this.dimensions.width / 2 ? d.x1! + 6 : d.x0! - 6)
-                .attr("y", d => (d.y1! + d.y0!) / 2)
-                .attr("dy", "0.35em")
-                .attr("text-anchor", d => d.x0! < this.dimensions.width / 2 ? "start" : "end")
-                .text(d => `${d.name}: ${d.value}`);
-
-            el.appendChild(svg.node()!);
+            this.svg = this.generateSankey();
+            el.appendChild(this.svg);
         });
     }
 

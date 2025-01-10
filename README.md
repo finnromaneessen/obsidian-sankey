@@ -9,6 +9,7 @@ Sankey diagrams consist of links and nodes that can be specified using YAML.
 
 #### Links
 Links are created using a source, a target and a value.
+
 ![image](images/links.png)
 
 #### Nodes

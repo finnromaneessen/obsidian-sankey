@@ -2,7 +2,7 @@ import { Plugin } from 'obsidian';
 import * as d3san from 'd3-sankey';
 import * as d3 from 'd3';
 import { parse as yamlParse } from 'yaml';
-import { SankeySettingTab } from 'settings';
+import { SankeySettingTab } from 'src/settings';
 
 
 interface SNodeExtra {

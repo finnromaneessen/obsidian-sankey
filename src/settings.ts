@@ -1,4 +1,4 @@
-import SankeyPlugin from './main';
+import SankeyPlugin from 'src/main';
 import { App, PluginSettingTab, Setting } from 'obsidian';
 
 export class SankeySettingTab extends PluginSettingTab {

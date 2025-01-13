@@ -1,11 +1,10 @@
 {
 	"id": "sankey-plugin",
 	"name": "Sankey",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "Plugin to create Sankey diagrams in Obsidian.",
 	"author": "Finn Romaneessen",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"authorUrl": "https://github.com/finnromaneessen",
 	"isDesktopOnly": true
 }

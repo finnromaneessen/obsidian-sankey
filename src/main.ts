@@ -108,7 +108,6 @@ function linkColor(link: SLink, linkColor: string): string {
             break;
 
         case 'target':
-            console.log(link.target);
             color = (link.target as SNode).color!;
             break;
 

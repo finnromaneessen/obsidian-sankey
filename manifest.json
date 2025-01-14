@@ -3,7 +3,7 @@
 	"name": "Sankey",
 	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "Create Sankey diagrams in Obsidian.",
+	"description": "Create Sankey diagrams in your notes.",
 	"author": "Finn Romaneessen",
 	"authorUrl": "https://github.com/finnromaneessen",
 	"isDesktopOnly": true

@@ -92,10 +92,10 @@ function verifyColorOrRandom(node: SNode): SNode {
     }
 
     //No valid color -> Add random color
-    var num = Math.round(0xffffff * Math.random());
-    var r = num >> 16;
-    var g = num >> 8 & 255;
-    var b = num & 255;
+    let num = Math.round(0xffffff * Math.random());
+    let r = num >> 16;
+    let g = num >> 8 & 255;
+    let b = num & 255;
     node.color = 'rgb(' + r + ', ' + g + ', ' + b + ')';
     return node;
 }

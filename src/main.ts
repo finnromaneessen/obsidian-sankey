@@ -144,6 +144,26 @@ export default class SankeyPlugin extends Plugin {
         this.element.appendChild(this.svg);
     }
 
+    table(): HTMLElement {
+        const table = this.element.createEl('table');
+        const thead = table.createEl('thead');
+        const tbody = table.createEl('tbody');
+
+        const trHead = thead.createEl('tr');
+        trHead.createEl('th', { text: 'Source' });
+        trHead.createEl('th', { text: 'Target' });
+        trHead.createEl('th', { text: 'Value' });
+
+        this.data.links.forEach((link) => {
+            const tr = tbody.createEl('tr');
+            tr.createEl('td', { text: link.source });
+            tr.createEl('td', { text: link.target });
+            tr.createEl('td', { text: link.value.toString() });
+        });
+
+        return table;
+    }
+
     generateSankey(): SVGSVGElement {
         // Create Sankey generator
         const generator = d3san.sankey()
@@ -236,8 +256,12 @@ export default class SankeyPlugin extends Plugin {
 
             prepareNodes(this.data);
 
+
             this.svg = this.generateSankey();
             el.appendChild(this.svg);
+
+            this.table();
+
         });
     }
 

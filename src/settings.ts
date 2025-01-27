@@ -28,6 +28,8 @@ export class SankeySettingTab extends PluginSettingTab {
                     .onChange(async (value) => {
                         this.plugin.settings.linkColor = value;
                         await this.plugin.saveSettings();
+
+                        this.plugin.app.workspace.trigger('rerender-sankey');
                     });
             });
 
@@ -41,6 +43,8 @@ export class SankeySettingTab extends PluginSettingTab {
                         if (!isNaN(n) && n > 0) {
                             this.plugin.settings.nodeWidth = n;
                             await this.plugin.saveSettings();
+
+                            this.plugin.app.workspace.trigger('rerender-sankey');
                         }
                     })
             });
@@ -60,6 +64,8 @@ export class SankeySettingTab extends PluginSettingTab {
                     .onChange(async (value) => {
                         this.plugin.settings.nodeAlign = value;
                         await this.plugin.saveSettings();
+
+                        this.plugin.app.workspace.trigger('rerender-sankey');
                     });
             });
 
@@ -73,6 +79,8 @@ export class SankeySettingTab extends PluginSettingTab {
                         if (!isNaN(n) && n > 0) {
                             this.plugin.settings.nodePadding = n;
                             await this.plugin.saveSettings();
+
+                            this.plugin.app.workspace.trigger('rerender-sankey');
                         }
                     })
             });

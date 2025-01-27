@@ -6,5 +6,5 @@
 	"description": "Create Sankey diagrams in your notes.",
 	"author": "Finn Romaneessen",
 	"authorUrl": "https://github.com/finnromaneessen",
-	"isDesktopOnly": true
+	"isDesktopOnly": false
 }

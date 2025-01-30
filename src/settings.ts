@@ -15,7 +15,7 @@ export class SankeySettingTab extends PluginSettingTab {
         containerEl.empty();
 
         new Setting(containerEl)
-            .setName('Link Color')
+            .setName('Link color')
             .setDesc('Color of the links')
             .addDropdown(dropDown => {
                 dropDown
@@ -34,7 +34,7 @@ export class SankeySettingTab extends PluginSettingTab {
             });
 
         new Setting(containerEl)
-            .setName('Node Width')
+            .setName('Node width')
             .setDesc('Width of the nodes')
             .addText(text => {
                 text.setValue(this.plugin.settings.nodeWidth.toString())
@@ -50,7 +50,7 @@ export class SankeySettingTab extends PluginSettingTab {
             });
 
         new Setting(containerEl)
-            .setName('Node Align')
+            .setName('Node alignment')
             .setDesc('Alignment method of the nodes')
             .addDropdown(dropDown => {
                 dropDown
@@ -70,7 +70,7 @@ export class SankeySettingTab extends PluginSettingTab {
             });
 
         new Setting(containerEl)
-            .setName('Node Padding')
+            .setName('Node padding')
             .setDesc('Padding between nodes')
             .addText(text => {
                 text.setValue(this.plugin.settings.nodePadding.toString())
